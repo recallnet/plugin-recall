@@ -1,0 +1,77 @@
+{
+    "name": "@elizaos-plugins/plugin-recall",
+    "version": "0.25.9",
+    "type": "module",
+    "main": "dist/index.js",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "import": {
+                "@elizaos/source": "./src/index.ts",
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            }
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "dependencies": {
+        "@recallnet/chains": "^0.0.5",
+        "@recallnet/sdk": "^0.0.6",
+        "@dsnp/parquetjs": "^1.8.5",
+        "duckdb": "^1.2.0",
+        "@elizaos/core": "workspace:*",
+        "tsup": "8.3.5"
+    },
+    "scripts": {
+        "build": "tsup --format esm --dts",
+        "dev": "tsup --format esm --dts --watch",
+        "test": "vitest run",
+        "lint": "biome check src/",
+        "lint:fix": "biome check --apply src/",
+        "format": "biome format src/",
+        "format:fix": "biome format --write src/"
+    },
+    "peerDependencies": {
+        "whatwg-url": "7.1.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.10.1",
+        "@biomejs/biome": "1.5.3"
+    },
+    "agentConfig": {
+        "pluginType": "elizaos:client:1.0.0",
+        "pluginParameters": {
+            "RECALL_PRIVATE_KEY": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Recall private key for authentication"
+            },
+            "RECALL_BUCKET_ALIAS": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Recall bucket alias is required"
+            },
+            "RECALL_COT_LOG_PREFIX": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Recall COT log prefix is required"
+            },
+            "RECALL_NETWORK": {
+                "type": "string",
+                "description": "Recall network is optional"
+            },
+            "RECALL_SYNC_INTERVAL": {
+                "type": "number",
+                "description": "Recall sync interval is optional"
+            },
+            "RECALL_BATCH_SIZE": {
+                "type": "number",
+                "description": "Recall batch size is optional"
+            }
+        }
+    }
+}
