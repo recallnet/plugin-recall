@@ -1,5 +1,5 @@
 {
-  "name": "@elizaos-plugins/plugin-recall",
+  "name": "@recallnet/plugin-eliza-storage",
   "version": "0.0.1",
   "license": "MIT AND Apache-2.0",
   "publishConfig": {
