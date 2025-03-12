@@ -1,26 +1,33 @@
 import {
   type Action,
+  type ActionExample,
+  type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  type State,
-  type HandlerCallback,
-  type ActionExample,
-  elizaLogger,
   ServiceType,
-} from '@elizaos/core';
-import { RecallService } from '../services/recall.service.js';
+  type State,
+  elizaLogger,
+} from "@elizaos/core";
+
+import { RecallService } from "../services/recall.service.js";
 
 const createBucketKeywords = [
-  'create a bucket',
-  'make a bucket',
-  'new bucket',
-  'generate a bucket',
-  'add a bucket',
+  "create a bucket",
+  "make a bucket",
+  "new bucket",
+  "generate a bucket",
+  "add a bucket",
 ];
 
 export const createBucketAction: Action = {
-  name: 'CREATE_BUCKET',
-  similes: ['CREATE_BUCKET', 'MAKE_BUCKET', 'NEW_BUCKET', 'GENERATE_BUCKET', 'ADD_BUCKET'],
+  name: "CREATE_BUCKET",
+  similes: [
+    "CREATE_BUCKET",
+    "MAKE_BUCKET",
+    "NEW_BUCKET",
+    "GENERATE_BUCKET",
+    "ADD_BUCKET",
+  ],
   validate: async (_runtime: IAgentRuntime, message: Memory) => {
     const text = message.content.text.toLowerCase();
 
@@ -32,14 +39,18 @@ export const createBucketAction: Action = {
     // Extract alias from quoted text (single or double quotes)
     const aliasMatch = message.content.text.match(/["']([^"']+)["']/);
     if (!aliasMatch || !aliasMatch[1]) {
-      elizaLogger.error('CREATE_BUCKET validation failed: No alias detected in quotes.');
+      elizaLogger.error(
+        "CREATE_BUCKET validation failed: No alias detected in quotes.",
+      );
       return false;
     }
 
-    elizaLogger.info(`CREATE_BUCKET Validation Passed! Alias: ${aliasMatch[1]}`);
+    elizaLogger.info(
+      `CREATE_BUCKET Validation Passed! Alias: ${aliasMatch[1]}`,
+    );
     return true;
   },
-  description: 'Creates a new Recall bucket with a given alias.',
+  description: "Creates a new Recall bucket with a given alias.",
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
@@ -47,8 +58,10 @@ export const createBucketAction: Action = {
     _options?: { [key: string]: unknown },
     callback?: HandlerCallback,
   ): Promise<boolean> => {
-    const recallService = runtime.services.get('recall' as ServiceType) as RecallService;
-    let text = '';
+    const recallService = runtime.services.get(
+      "recall" as ServiceType,
+    ) as RecallService;
+    let text = "";
 
     try {
       let currentState = state;
@@ -58,19 +71,22 @@ export const createBucketAction: Action = {
         currentState = await runtime.updateRecentMessageState(currentState);
       }
 
-      elizaLogger.info(`CREATE_BUCKET Handler triggered: ${message.content.text}`);
+      elizaLogger.info(
+        `CREATE_BUCKET Handler triggered: ${message.content.text}`,
+      );
 
       // Extract alias from quoted text
       const aliasMatch = message.content.text.match(/["']([^"']+)["']/);
       if (!aliasMatch || !aliasMatch[1]) {
-        text = '❌ Invalid bucket request. Please specify an alias in quotes.';
-        elizaLogger.error('CREATE_BUCKET failed: No alias found.');
+        text = "❌ Invalid bucket request. Please specify an alias in quotes.";
+        elizaLogger.error("CREATE_BUCKET failed: No alias found.");
       } else {
         const bucketAlias = aliasMatch[1].trim();
         elizaLogger.info(`Creating bucket with alias: ${bucketAlias}`);
 
         // Call RecallService to create or fetch bucket
-        const bucketAddress = await recallService.getOrCreateBucket(bucketAlias);
+        const bucketAddress =
+          await recallService.getOrCreateBucket(bucketAlias);
 
         if (bucketAddress) {
           text = `✅ Successfully created or retrieved bucket **"${bucketAlias}"** at address: **${bucketAddress}**`;
@@ -78,12 +94,15 @@ export const createBucketAction: Action = {
             `CREATE_BUCKET success: Bucket "${bucketAlias}" created at ${bucketAddress}`,
           );
         } else {
-          text = '❌ Bucket creation failed. Please try again later.';
-          elizaLogger.error('CREATE_BUCKET failed: No response from RecallService.');
+          text = "❌ Bucket creation failed. Please try again later.";
+          elizaLogger.error(
+            "CREATE_BUCKET failed: No response from RecallService.",
+          );
         }
       }
     } catch (error: any) {
-      text = '⚠️ An error occurred while creating your bucket. Please try again later.';
+      text =
+        "⚠️ An error occurred while creating your bucket. Please try again later.";
       elizaLogger.error(`CREATE_BUCKET error: ${error.message}`);
     }
 
@@ -93,7 +112,7 @@ export const createBucketAction: Action = {
       userId: message.agentId,
       content: {
         text,
-        action: 'CREATE_BUCKET',
+        action: "CREATE_BUCKET",
         source: message.content.source,
       },
     };
@@ -109,40 +128,40 @@ export const createBucketAction: Action = {
   examples: [
     [
       {
-        user: '{{user1}}',
+        user: "{{user1}}",
         content: { text: 'Create a bucket for me named "new-bucket"' },
       },
       {
-        user: '{{agentName}}',
+        user: "{{agentName}}",
         content: {
           text: '✅ Successfully created or retrieved bucket **"new-bucket"** at address: **0x123...456**',
-          action: 'CREATE_BUCKET',
+          action: "CREATE_BUCKET",
         },
       },
     ],
     [
       {
-        user: '{{user1}}',
+        user: "{{user1}}",
         content: { text: "Make a bucket for me with the alias 'backup-data'" },
       },
       {
-        user: '{{agentName}}',
+        user: "{{agentName}}",
         content: {
           text: '✅ Successfully created or retrieved bucket **"backup-data"** at address: **0xDEF...789**',
-          action: 'CREATE_BUCKET',
+          action: "CREATE_BUCKET",
         },
       },
     ],
     [
       {
-        user: '{{user1}}',
+        user: "{{user1}}",
         content: { text: "Generate a new bucket called 'logs'" },
       },
       {
-        user: '{{agentName}}',
+        user: "{{agentName}}",
         content: {
           text: '✅ Successfully created or retrieved bucket **"logs"** at address: **0xAAA...BBB**',
-          action: 'CREATE_BUCKET',
+          action: "CREATE_BUCKET",
         },
       },
     ],

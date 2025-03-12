@@ -1,27 +1,34 @@
 import {
   type Action,
+  type ActionExample,
+  type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  type State,
-  type HandlerCallback,
-  type ActionExample,
-  elizaLogger,
   ServiceType,
-} from '@elizaos/core';
-import { RecallService } from '../services/recall.service.js';
+  type State,
+  elizaLogger,
+} from "@elizaos/core";
+
+import { RecallService } from "../services/recall.service.js";
 
 const bucketKeywords = [
-  'list buckets',
-  'get my buckets',
-  'retrieve my buckets',
-  'show my buckets',
-  'fetch my buckets',
-  'available buckets',
+  "list buckets",
+  "get my buckets",
+  "retrieve my buckets",
+  "show my buckets",
+  "fetch my buckets",
+  "available buckets",
 ];
 
 export const listBucketsAction: Action = {
-  name: 'LIST_BUCKETS',
-  similes: ['LIST_BUCKETS', 'GET_BUCKETS', 'SHOW_BUCKETS', 'FETCH_BUCKETS', 'AVAILABLE_BUCKETS'],
+  name: "LIST_BUCKETS",
+  similes: [
+    "LIST_BUCKETS",
+    "GET_BUCKETS",
+    "SHOW_BUCKETS",
+    "FETCH_BUCKETS",
+    "AVAILABLE_BUCKETS",
+  ],
   validate: async (_runtime: IAgentRuntime, message: Memory) => {
     const text = message.content.text.toLowerCase();
 
@@ -30,10 +37,10 @@ export const listBucketsAction: Action = {
       return false;
     }
 
-    elizaLogger.info('LIST_BUCKETS Validation Passed!');
+    elizaLogger.info("LIST_BUCKETS Validation Passed!");
     return true;
   },
-  description: 'Retrieves and lists all available Recall buckets.',
+  description: "Retrieves and lists all available Recall buckets.",
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
@@ -41,8 +48,10 @@ export const listBucketsAction: Action = {
     _options?: { [key: string]: unknown },
     callback?: HandlerCallback,
   ): Promise<boolean> => {
-    const recallService = runtime.services.get('recall' as ServiceType) as RecallService;
-    let text = '';
+    const recallService = runtime.services.get(
+      "recall" as ServiceType,
+    ) as RecallService;
+    let text = "";
 
     try {
       let currentState = state;
@@ -52,22 +61,25 @@ export const listBucketsAction: Action = {
         currentState = await runtime.updateRecentMessageState(currentState);
       }
 
-      elizaLogger.info('Fetching bucket list...');
+      elizaLogger.info("Fetching bucket list...");
       const bucketList = await recallService.listBuckets();
 
       if (bucketList && bucketList.length > 0) {
         const bucketDetails = bucketList
           .map((bucket) => `🔹 **${bucket.kind}** (Address: ${bucket.addr})`)
-          .join('\n');
+          .join("\n");
 
         text = `📂 **Your Recall Buckets:**\n\n${bucketDetails}`;
-        elizaLogger.info(`LIST_BUCKETS success: Retrieved ${bucketList.length} buckets.`);
+        elizaLogger.info(
+          `LIST_BUCKETS success: Retrieved ${bucketList.length} buckets.`,
+        );
       } else {
-        text = '📂 You currently have no Recall buckets.';
-        elizaLogger.info('LIST_BUCKETS success: No buckets found.');
+        text = "📂 You currently have no Recall buckets.";
+        elizaLogger.info("LIST_BUCKETS success: No buckets found.");
       }
     } catch (error: any) {
-      text = '⚠️ An error occurred while retrieving your buckets. Please try again later.';
+      text =
+        "⚠️ An error occurred while retrieving your buckets. Please try again later.";
       elizaLogger.error(`LIST_BUCKETS error: ${error.message}`);
     }
 
@@ -77,7 +89,7 @@ export const listBucketsAction: Action = {
       userId: message.agentId,
       content: {
         text,
-        action: 'LIST_BUCKETS',
+        action: "LIST_BUCKETS",
         source: message.content.source,
       },
     };
@@ -93,40 +105,40 @@ export const listBucketsAction: Action = {
   examples: [
     [
       {
-        user: '{{user1}}',
-        content: { text: 'Get a list of my buckets' },
+        user: "{{user1}}",
+        content: { text: "Get a list of my buckets" },
       },
       {
-        user: '{{agentName}}',
+        user: "{{agentName}}",
         content: {
-          text: '📂 **Your Recall Buckets:**\n🔹 **Bucket Type 1** (Address: 0x123...456)\n🔹 **Bucket Type 2** (Address: 0x789...ABC)',
-          action: 'LIST_BUCKETS',
+          text: "📂 **Your Recall Buckets:**\n🔹 **Bucket Type 1** (Address: 0x123...456)\n🔹 **Bucket Type 2** (Address: 0x789...ABC)",
+          action: "LIST_BUCKETS",
         },
       },
     ],
     [
       {
-        user: '{{user1}}',
-        content: { text: 'Show me my buckets' },
+        user: "{{user1}}",
+        content: { text: "Show me my buckets" },
       },
       {
-        user: '{{agentName}}',
+        user: "{{agentName}}",
         content: {
-          text: '📂 **Your Recall Buckets:**\n🔹 **Data Storage** (Address: 0xDEF...789)\n🔹 **AI Memory** (Address: 0x123...ABC)',
-          action: 'LIST_BUCKETS',
+          text: "📂 **Your Recall Buckets:**\n🔹 **Data Storage** (Address: 0xDEF...789)\n🔹 **AI Memory** (Address: 0x123...ABC)",
+          action: "LIST_BUCKETS",
         },
       },
     ],
     [
       {
-        user: '{{user1}}',
-        content: { text: 'Do I have any buckets?' },
+        user: "{{user1}}",
+        content: { text: "Do I have any buckets?" },
       },
       {
-        user: '{{agentName}}',
+        user: "{{agentName}}",
         content: {
-          text: '📂 You currently have no Recall buckets.',
-          action: 'LIST_BUCKETS',
+          text: "📂 You currently have no Recall buckets.",
+          action: "LIST_BUCKETS",
         },
       },
     ],

@@ -1,6 +1,6 @@
 # @elizaos-plugins/plugin-recall
 
-This plugin integrates **Recall storage** with Eliza AI agents, providing persistent memory capabilities. 
+This plugin integrates **Recall storage** with Eliza AI agents, providing persistent memory capabilities.
 
 ## Overview
 
@@ -70,16 +70,20 @@ export const recallCotProvider: Provider = {
     _state?: State,
   ): Promise<Error | string> => {
     if (!process.env.RECALL_BUCKET_ALIAS) {
-      elizaLogger.error('RECALL_BUCKET_ALIAS is not set');
+      elizaLogger.error("RECALL_BUCKET_ALIAS is not set");
     }
     try {
-      const recallService = _runtime.services.get('recall' as ServiceType) as RecallService;
+      const recallService = _runtime.services.get(
+        "recall" as ServiceType,
+      ) as RecallService;
       const res = await recallService.retrieveOrderedChainOfThoughtLogs(
         process.env.RECALL_BUCKET_ALIAS,
       );
       return JSON.stringify(res, null, 2);
     } catch (error) {
-      return error instanceof Error ? error.message : 'Unable to get storage provider';
+      return error instanceof Error
+        ? error.message
+        : "Unable to get storage provider";
     }
   },
 };
@@ -104,9 +108,9 @@ The **RecallService** manages interaction with the **Recall API**, handling:
 
 ```typescript
 const recallService = new RecallService();
-await recallService.getOrCreateBucket('my-bucket');
-await recallService.addObject('my-bucket', 'log.txt', 'Sample log data');
-const retrieved = await recallService.getObject('my-bucket', 'log.txt');
+await recallService.getOrCreateBucket("my-bucket");
+await recallService.addObject("my-bucket", "log.txt", "Sample log data");
+const retrieved = await recallService.getObject("my-bucket", "log.txt");
 ```
 
 ## 📌 Instructions
@@ -143,6 +147,7 @@ RECALL_NETWORK="testnet" # Defaults to the Recall testnet
 ```
 
 ## Installation
+
 pnpm add @elizaos-plugins/plugin-recall
 
 ## Usage
@@ -152,4 +157,3 @@ To use the plugin, you need to add it to your Eliza OS project.
 ### Security Considerations
 
 - Never share your wallet address or private keys
-

@@ -1,36 +1,37 @@
 import {
   type Action,
+  type ActionExample,
+  type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  type State,
-  type HandlerCallback,
-  type ActionExample,
-  elizaLogger,
   ServiceType,
-} from '@elizaos/core';
-import { RecallService } from '../services/recall.service.js';
+  type State,
+  elizaLogger,
+} from "@elizaos/core";
+
+import { RecallService } from "../services/recall.service.js";
 
 const balanceKeywords = [
-  'balance',
-  'credit balance',
-  'account balance',
-  'how many credits',
-  'check my credits',
-  'my available credits',
-  'how much credit',
-  'how much do I have',
-  'do I have credits',
+  "balance",
+  "credit balance",
+  "account balance",
+  "how many credits",
+  "check my credits",
+  "my available credits",
+  "how much credit",
+  "how much do I have",
+  "do I have credits",
 ];
 
 export const getCreditBalanceAction: Action = {
-  name: 'GET_CREDIT_BALANCE',
+  name: "GET_CREDIT_BALANCE",
   similes: [
-    'GET_CREDIT_BALANCE',
-    'CHECK_CREDIT',
-    'ACCOUNT_CREDIT_BALANCE',
-    'CREDIT_BALANCE',
-    'BALANCE_CHECK',
-    'AVAILABLE_CREDITS',
+    "GET_CREDIT_BALANCE",
+    "CHECK_CREDIT",
+    "ACCOUNT_CREDIT_BALANCE",
+    "CREDIT_BALANCE",
+    "BALANCE_CHECK",
+    "AVAILABLE_CREDITS",
   ],
   validate: async (_runtime: IAgentRuntime, message: Memory) => {
     const text = message.content.text.toLowerCase();
@@ -44,12 +45,12 @@ export const getCreditBalanceAction: Action = {
     const amountMatch = text.match(/([\d.]+)/);
     if (amountMatch) {
       elizaLogger.error(
-        'GET_CREDIT_BALANCE validation failed: Message contains numeric values (possible buy request).',
+        "GET_CREDIT_BALANCE validation failed: Message contains numeric values (possible buy request).",
       );
       return false;
     }
 
-    elizaLogger.info('GET_CREDIT_BALANCE Validation Passed!');
+    elizaLogger.info("GET_CREDIT_BALANCE Validation Passed!");
     return true;
   },
   description: "Checks the user's Recall credit balance",
@@ -60,8 +61,10 @@ export const getCreditBalanceAction: Action = {
     _options?: { [key: string]: unknown },
     callback?: HandlerCallback,
   ): Promise<boolean> => {
-    const recallService = runtime.services.get('recall' as ServiceType) as RecallService;
-    let text = '';
+    const recallService = runtime.services.get(
+      "recall" as ServiceType,
+    ) as RecallService;
+    let text = "";
 
     try {
       let currentState = state;
@@ -70,7 +73,7 @@ export const getCreditBalanceAction: Action = {
       } else {
         currentState = await runtime.updateRecentMessageState(currentState);
       }
-      elizaLogger.info('Fetching credit balance...');
+      elizaLogger.info("Fetching credit balance...");
       const balanceInfo = await recallService.getCreditInfo();
 
       if (balanceInfo?.creditFree !== undefined) {
@@ -79,12 +82,16 @@ export const getCreditBalanceAction: Action = {
 
         text = `💰 Your current Recall credit balance is **${balance} credits**.`;
       } else {
-        elizaLogger.error('GET_CREDIT_BALANCE failed: No balance info received.');
-        text = '⚠️ Unable to retrieve your credit balance. Please try again later.';
+        elizaLogger.error(
+          "GET_CREDIT_BALANCE failed: No balance info received.",
+        );
+        text =
+          "⚠️ Unable to retrieve your credit balance. Please try again later.";
       }
     } catch (error: any) {
       elizaLogger.error(`GET_CREDIT_BALANCE error: ${error.message}`);
-      text = '⚠️ An error occurred while fetching your credit balance. Please try again later.';
+      text =
+        "⚠️ An error occurred while fetching your credit balance. Please try again later.";
     }
 
     // Create a new memory entry for the response
@@ -93,7 +100,7 @@ export const getCreditBalanceAction: Action = {
       userId: message.agentId,
       content: {
         text,
-        action: 'GET_CREDIT_BALANCE',
+        action: "GET_CREDIT_BALANCE",
         source: message.content.source,
       },
     };
@@ -111,40 +118,40 @@ export const getCreditBalanceAction: Action = {
   examples: [
     [
       {
-        user: '{{user1}}',
-        content: { text: 'What is my account credit balance?' },
+        user: "{{user1}}",
+        content: { text: "What is my account credit balance?" },
       },
       {
-        user: '{{agentName}}',
+        user: "{{agentName}}",
         content: {
-          text: '💰 Your current Recall credit balance is **X credits**.',
-          action: 'GET_CREDIT_BALANCE',
+          text: "💰 Your current Recall credit balance is **X credits**.",
+          action: "GET_CREDIT_BALANCE",
         },
       },
     ],
     [
       {
-        user: '{{user1}}',
-        content: { text: 'How many credits are in my account?' },
+        user: "{{user1}}",
+        content: { text: "How many credits are in my account?" },
       },
       {
-        user: '{{agentName}}',
+        user: "{{agentName}}",
         content: {
-          text: '💰 Your current Recall credit balance is **X credits**.',
-          action: 'GET_CREDIT_BALANCE',
+          text: "💰 Your current Recall credit balance is **X credits**.",
+          action: "GET_CREDIT_BALANCE",
         },
       },
     ],
     [
       {
-        user: '{{user1}}',
-        content: { text: 'Can you check my available credits?' },
+        user: "{{user1}}",
+        content: { text: "Can you check my available credits?" },
       },
       {
-        user: '{{agentName}}',
+        user: "{{agentName}}",
         content: {
-          text: '💰 Your current Recall credit balance is **X credits**.',
-          action: 'GET_CREDIT_BALANCE',
+          text: "💰 Your current Recall credit balance is **X credits**.",
+          action: "GET_CREDIT_BALANCE",
         },
       },
     ],

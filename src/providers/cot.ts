@@ -1,14 +1,15 @@
 import {
   IAgentRuntime,
   Memory,
+  ModelClass,
   Provider,
   State,
-  elizaLogger,
-  ModelClass,
   composeContext,
+  elizaLogger,
   generateText,
-} from '@elizaos/core';
-import { logMemoryPostgres, logMemorySqlite } from '../utils.js';
+} from "@elizaos/core";
+
+import { logMemoryPostgres, logMemorySqlite } from "../utils.js";
 
 export const systemPrompt = `You are an AI assistant helping with a conversation.
 Before answering, please explicitly write out your step-by-step reasoning process starting with "REASONING:" and ending with "ANSWER:".
@@ -78,7 +79,9 @@ function extractChainOfThought(text: string): string {
   if (reasoningMatch && reasoningMatch[1]) {
     const reasoning = reasoningMatch[1].trim();
     if (reasoning.length > 0) {
-      elizaLogger.info(`[extractChainOfThought] Successfully extracted REASONING section`);
+      elizaLogger.info(
+        `[extractChainOfThought] Successfully extracted REASONING section`,
+      );
       return reasoning;
     }
   }
@@ -89,7 +92,9 @@ function extractChainOfThought(text: string): string {
     const answerIndex = text.indexOf(answerMatch[0]);
     if (answerIndex > 20) {
       const beforeAnswer = text.substring(0, answerIndex).trim();
-      elizaLogger.info(`[extractChainOfThought] Extracted everything before ANSWER marker`);
+      elizaLogger.info(
+        `[extractChainOfThought] Extracted everything before ANSWER marker`,
+      );
       return beforeAnswer;
     }
   }
@@ -101,27 +106,37 @@ function extractChainOfThought(text: string): string {
     if (jsonIndex > 20) {
       // Ensure there's enough text before the JSON
       const beforeJson = text.substring(0, jsonIndex).trim();
-      elizaLogger.info(`[extractChainOfThought] Extracted text before JSON formatting`);
+      elizaLogger.info(
+        `[extractChainOfThought] Extracted text before JSON formatting`,
+      );
       return beforeJson;
     }
   }
 
   // Last resort: If we couldn't extract anything, log a warning and take the first part of the text
-  elizaLogger.warn(`[extractChainOfThought] Could not extract chain of thought with any pattern`);
+  elizaLogger.warn(
+    `[extractChainOfThought] Could not extract chain of thought with any pattern`,
+  );
 
   // If the response is longer than 500 characters, take the first 40% as a best guess
   if (text.length > 500) {
     const firstPortion = text.substring(0, Math.floor(text.length * 0.4));
-    elizaLogger.info(`[extractChainOfThought] Using first 40% of response as fallback`);
+    elizaLogger.info(
+      `[extractChainOfThought] Using first 40% of response as fallback`,
+    );
     return `[Auto-extracted] ${firstPortion}`;
   }
 
   // If all else fails, indicate that we couldn't extract anything meaningful
-  return '[Could not extract chain of thought]';
+  return "[Could not extract chain of thought]";
 }
 
 export const cotProvider: Provider = {
-  get: async (runtime: IAgentRuntime, message: Memory, _state?: State): Promise<string> => {
+  get: async (
+    runtime: IAgentRuntime,
+    message: Memory,
+    _state?: State,
+  ): Promise<string> => {
     const logPrefix = `[CoT Provider]`;
     elizaLogger.info(`${logPrefix} Starting chain-of-thought generation`);
 
@@ -153,18 +168,22 @@ export const cotProvider: Provider = {
 
       // Log a preview of the response for debugging
       const previewLength = Math.min(gen.length, 500);
-      elizaLogger.info(`${logPrefix} Response preview: ${gen.substring(0, previewLength)}...`);
+      elizaLogger.info(
+        `${logPrefix} Response preview: ${gen.substring(0, previewLength)}...`,
+      );
 
       // Extract the chain of thought using REASONING/ANSWER markers
       let chainOfThoughtText = extractChainOfThought(gen);
 
       // Get user message text safely
       const userMessageText =
-        message.content && typeof message.content === 'object' && message.content.text
+        message.content &&
+        typeof message.content === "object" &&
+        message.content.text
           ? message.content.text
-          : typeof message.content === 'string'
+          : typeof message.content === "string"
             ? message.content
-            : '';
+            : "";
 
       // Format log data for storage
       const logData = {
@@ -179,42 +198,52 @@ export const cotProvider: Provider = {
       try {
         const dbAdapter = runtime.databaseAdapter as any;
 
-        if ('pool' in dbAdapter) {
+        if ("pool" in dbAdapter) {
           // PostgreSQL
-          elizaLogger.info(`${logPrefix} Using PostgreSQL to log chain-of-thought`);
+          elizaLogger.info(
+            `${logPrefix} Using PostgreSQL to log chain-of-thought`,
+          );
           await logMemoryPostgres(dbAdapter.pool, {
             userId: message.userId,
             agentId: message.agentId,
             roomId: message.roomId,
-            type: 'chain-of-thought',
+            type: "chain-of-thought",
             body: JSON.stringify(logData),
           });
-          elizaLogger.info(`${logPrefix} Successfully logged chain-of-thought to PostgreSQL`);
-        } else if ('db' in dbAdapter) {
+          elizaLogger.info(
+            `${logPrefix} Successfully logged chain-of-thought to PostgreSQL`,
+          );
+        } else if ("db" in dbAdapter) {
           // SQLite
           elizaLogger.info(`${logPrefix} Using SQLite to log chain-of-thought`);
           await logMemorySqlite(dbAdapter.db, {
             userId: message.userId,
             agentId: message.agentId,
             roomId: message.roomId,
-            type: 'chain-of-thought',
+            type: "chain-of-thought",
             body: JSON.stringify(logData),
           });
-          elizaLogger.info(`${logPrefix} Successfully logged chain-of-thought to SQLite`);
+          elizaLogger.info(
+            `${logPrefix} Successfully logged chain-of-thought to SQLite`,
+          );
         } else {
           elizaLogger.error(`${logPrefix} Unsupported database adapter type`);
         }
       } catch (dbError: any) {
-        elizaLogger.error(`${logPrefix} Database error while saving CoT log: ${dbError.message}`);
+        elizaLogger.error(
+          `${logPrefix} Database error while saving CoT log: ${dbError.message}`,
+        );
         elizaLogger.error(`${logPrefix} Error details:`, dbError);
       }
 
       elizaLogger.info(`${logPrefix} Chain-of-thought processing complete`);
-      return chainOfThoughtText || '';
+      return chainOfThoughtText || "";
     } catch (error: any) {
       elizaLogger.error(`${logPrefix} Error in chain-of-thought provider:`);
-      elizaLogger.error(`${logPrefix} ${error instanceof Error ? error.stack : 'Unknown error'}`);
-      return '';
+      elizaLogger.error(
+        `${logPrefix} ${error instanceof Error ? error.stack : "Unknown error"}`,
+      );
+      return "";
     }
   },
 };
