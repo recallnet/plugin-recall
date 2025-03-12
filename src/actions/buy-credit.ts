@@ -37,7 +37,12 @@ export const buyCreditAction: Action = {
       return false;
     }
 
-    const amount = parseFloat(amountMatch[1]);
+    const value = amountMatch[1];
+    if (!value) {
+      elizaLogger.error('BUY_CREDIT failed: No amount provided.');
+      return false;
+    }
+    const amount = parseFloat(value);
     if (isNaN(amount) || amount <= 0) {
       return false;
     }
@@ -55,8 +60,8 @@ export const buyCreditAction: Action = {
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State,
-    _options: { [key: string]: unknown },
+    state?: State,
+    _options?: { [key: string]: unknown },
     callback?: HandlerCallback,
   ): Promise<boolean> => {
     const recallService = runtime.services.get('recall' as ServiceType) as RecallService;
@@ -75,8 +80,14 @@ export const buyCreditAction: Action = {
       if (!amountMatch) {
         text = '❌ Invalid credit request. Please specify an amount.';
         elizaLogger.error('BUY_CREDIT failed: No amount provided.');
+        return false;
       } else {
-        const amount = parseFloat(amountMatch[1]);
+        const value = amountMatch[1];
+        if (!value) {
+          elizaLogger.error('BUY_CREDIT failed: No amount provided.');
+          return false;
+        }
+        const amount = parseFloat(value);
         if (isNaN(amount) || amount <= 0) {
           text = '❌ Invalid credit amount. Please enter a number greater than 0.';
           elizaLogger.error('BUY_CREDIT failed: Invalid amount.');
@@ -98,7 +109,7 @@ export const buyCreditAction: Action = {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       text = '⚠️ An error occurred while purchasing credits. Please try again later.';
       elizaLogger.error(`BUY_CREDIT error: ${error.message}`);
     }

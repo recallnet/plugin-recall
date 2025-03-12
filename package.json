@@ -25,7 +25,11 @@
     "dist"
   ],
   "scripts": {
-    "dev": "tsc --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "dev": "tsup --watch",
     "build": "tsup"
   },
   "dependencies": {
@@ -44,7 +48,6 @@
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-only-warn": "^1.1.0",
     "prettier": "^3.5.3",
-    "tsc": "^2.0.4",
     "tsup": "8.3.5",
     "typescript": "^5.8.2",
     "typescript-eslint": "^8.26.1"

@@ -1,5 +1,5 @@
-import { elizaLogger } from '@elizaos/core';
-import { v4, UUID } from 'uuid';
+import { elizaLogger, type UUID } from '@elizaos/core';
+import { v4 } from 'uuid';
 
 export async function logMemoryPostgres(
   db: any,
@@ -61,7 +61,7 @@ export async function getUnsyncedLogsPostgres(db: any): Promise<
          LIMIT 100`,
   );
 
-  return rows.map((row) => ({
+  return rows.map((row: any) => ({
     ...row,
     body: typeof row.body === 'string' ? row.body : JSON.stringify(row.body),
   }));
@@ -69,7 +69,7 @@ export async function getUnsyncedLogsPostgres(db: any): Promise<
 
 export async function markLogsAsSyncedPostgres(db: any, logIds: UUID[]): Promise<void> {
   if (logIds.length === 0) {
-    elizaLogger.warn('⚠ No log IDs provided for marking as synced.');
+     elizaLogger.warn('⚠ No log IDs provided for marking as synced.');
     return;
   }
 
@@ -80,10 +80,17 @@ export async function markLogsAsSyncedPostgres(db: any, logIds: UUID[]): Promise
     await db.query(`UPDATE logs SET "isSynced" = TRUE WHERE id IN (${placeholders})`, logIds);
     elizaLogger.info(`✅ Successfully marked ${logIds.length} logs as synced.`);
   } catch (error) {
-    elizaLogger.error(`❌ Failed to mark logs as synced: ${error.message}`, {
-      logIds,
-      error: error instanceof Error ? error.message : String(error),
-    });
+    if (error instanceof Error) {
+      elizaLogger.error(`❌ Failed to mark logs as synced: ${error.message}`, {
+        logIds,
+        error: error.message,
+      });
+    } else {
+      elizaLogger.error(`❌ Failed to mark logs as synced: ${error}`, {
+        logIds,
+        error: String(error),
+      });
+    }
   }
 }
 

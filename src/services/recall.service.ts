@@ -3,7 +3,7 @@ import {
   Service,
   ServiceType,
   DatabaseAdapter,
-  IAgentRuntime,
+  IAgentRuntime,type UUID
 } from '@elizaos/core';
 import { ChainName, getChain, testnet } from '@recallnet/chains';
 import { AccountInfo } from '@recallnet/sdk/account';
@@ -16,7 +16,7 @@ import {
   getUnsyncedLogsSqlite,
   markLogsAsSyncedPostgres,
   markLogsAsSyncedSqlite,
-} from '../utils.ts';
+} from '../utils.js';
 
 type Result<T = unknown> = {
   result: T;
@@ -34,13 +34,13 @@ const batchSize = process.env.RECALL_BATCH_SIZE as string;
 
 export class RecallService extends Service {
   static serviceType: ServiceType = 'recall' as ServiceType;
-  private client: RecallClient;
-  private runtime: IAgentRuntime;
+  private client!: RecallClient;
+  private runtime!: IAgentRuntime;
   private syncInterval: NodeJS.Timeout | undefined;
-  private alias: string;
-  private prefix: string;
-  private intervalMs: number;
-  private batchSizeKB: number;
+  private alias!: string;
+  private prefix!: string;
+  private intervalMs!: number;
+  private batchSizeKB!: number;
 
   getInstance(): RecallService {
     return RecallService.getInstance();
@@ -71,8 +71,8 @@ export class RecallService extends Service {
       await this.ensureRequiredColumns();
 
       this.startPeriodicSync(this.intervalMs, this.batchSizeKB);
-      elizaLogger.success('RecallService initialized successfully, starting periodic sync.');
-    } catch (error) {
+      elizaLogger.info('RecallService initialized successfully, starting periodic sync.');
+    } catch (error: any) {
       elizaLogger.error(`Error initializing RecallService: ${error.message}`);
     }
   }
@@ -90,7 +90,7 @@ export class RecallService extends Service {
 
       // Then, check for agentId column
       await this.ensureColumn(db, 'agentId', 'TEXT', 'TEXT', 'NULL', 'NULL');
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error ensuring required columns: ${error.message}`);
       throw error;
     }
@@ -122,7 +122,7 @@ export class RecallService extends Service {
       } else if ('db' in db) {
         // SQLite
         const result = db.db.prepare(`PRAGMA table_info(logs)`).all();
-        columnExists = result.some((col) => col.name === columnName);
+        columnExists = result.some((col: any) => col.name === columnName);
       } else {
         throw new Error('Unsupported database adapter');
       }
@@ -153,7 +153,7 @@ export class RecallService extends Service {
       } else {
         elizaLogger.info(`${columnName} column already exists in logs table`);
       }
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error ensuring ${columnName} column: ${error.message}`);
       throw error;
     }
@@ -188,11 +188,11 @@ export class RecallService extends Service {
    * Gets the account information for the current user.
    * @returns The account information.
    */
-  public async getAccountInfo(): Promise<AccountInfo> | undefined {
+  public async getAccountInfo(): Promise<AccountInfo | undefined> {
     try {
       const info = await this.client.accountManager().info();
       return info.result;
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error getting account info: ${error.message}`);
       throw error;
     }
@@ -202,11 +202,11 @@ export class RecallService extends Service {
    * Lists all buckets in Recall.
    * @returns The list of buckets.
    */
-  public async listBuckets(): Promise<ListResult> | undefined {
+  public async listBuckets(): Promise<ListResult | undefined> {
     try {
       const info = await this.client.bucketManager().list();
       return info.result;
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error listing buckets: ${error.message}`);
       throw error;
     }
@@ -216,11 +216,11 @@ export class RecallService extends Service {
    * Gets the credit information for the account.
    * @returns The credit information.
    */
-  public async getCreditInfo(): Promise<CreditAccount> | undefined {
+  public async getCreditInfo(): Promise<CreditAccount | undefined> {
     try {
       const info = await this.client.creditManager().getAccount();
       return info.result;
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error getting credit info: ${error.message}`);
       throw error;
     }
@@ -235,7 +235,7 @@ export class RecallService extends Service {
     try {
       const info = await this.client.creditManager().buy(parseEther(amount));
       return info; // Return the full Result object
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error buying credit: ${error.message}`);
       throw error;
     }
@@ -275,7 +275,7 @@ export class RecallService extends Service {
 
       elizaLogger.info(`Successfully created new bucket "${bucketAlias}" at ${newBucket.bucket}`);
       return newBucket.bucket;
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error in getOrCreateBucket: ${error.message}`);
       throw error;
     }
@@ -308,7 +308,7 @@ export class RecallService extends Service {
         overwrite: options?.overwrite ?? false,
       });
       return info; // Return the full Result object
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error adding object: ${error.message}`);
       throw error;
     }
@@ -324,7 +324,7 @@ export class RecallService extends Service {
     try {
       const info = await this.client.bucketManager().get(bucket, key);
       return info.result;
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.warn(`Error getting object: ${error.message}`);
       // Return undefined instead of throwing to allow graceful handling of missing objects
       return undefined;
@@ -348,7 +348,7 @@ export class RecallService extends Service {
       } else {
         throw new Error('Unsupported database adapter');
       }
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error getting unsynced logs: ${error.message}`);
       return [];
     }
@@ -359,7 +359,7 @@ export class RecallService extends Service {
    * @param logIds The IDs of the logs to mark as synced.
    * @returns Whether the operation was successful.
    */
-  async markLogsAsSynced(logIds: string[]): Promise<boolean> {
+  async markLogsAsSynced(logIds: UUID[]): Promise<boolean> {
     if (logIds.length === 0) {
       return true;
     }
@@ -378,7 +378,7 @@ export class RecallService extends Service {
       }
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error marking logs as synced: ${error.message}`);
       return false;
     }
@@ -429,7 +429,7 @@ export class RecallService extends Service {
 
       elizaLogger.info(`Successfully stored batch at key: ${nextLogKey}`);
       return nextLogKey;
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.includes('timed out')) {
         elizaLogger.error(`Recall API timed out while storing batch`);
       } else {
@@ -465,7 +465,7 @@ export class RecallService extends Service {
 
       let batch: string[] = [];
       let batchSize = 0;
-      let processedLogIds: string[] = [];
+      let processedLogIds: UUID[] = [];
       let batchTimestamp = Date.now().toString();
 
       // Sort logs by createdAt to ensure we process in chronological order
@@ -524,7 +524,7 @@ export class RecallService extends Service {
           batch.push(jsonlEntry);
           batchSize += logSize;
           processedLogIds.push(log.id);
-        } catch (error) {
+        } catch (error: any) {
           elizaLogger.error(`Error processing log entry ${log.id}: ${error.message}`);
         }
       }
@@ -552,7 +552,7 @@ export class RecallService extends Service {
           ? `${this.intervalMs / 1000} seconds`
           : `${this.intervalMs / 1000 / 60} minutes`;
       elizaLogger.info(`Sync cycle complete. Next sync in ${logSyncInterval}.`);
-    } catch (error) {
+    } catch (error: any) {
       if (error.message.includes('timed out')) {
         elizaLogger.error(`Recall sync operation timed out: ${error.message}`);
       } else {
@@ -607,7 +607,7 @@ export class RecallService extends Service {
           const parsedLogs = decodedLogs.map((line) => JSON.parse(line));
 
           allLogs.push(...parsedLogs);
-        } catch (error) {
+        } catch (error: any) {
           elizaLogger.error(`Error retrieving log file ${logFile}: ${error.message}`);
         }
       }
@@ -624,7 +624,7 @@ export class RecallService extends Service {
         `Successfully retrieved and ordered ${allLogs.length} chain-of-thought logs.`,
       );
       return allLogs;
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error retrieving ordered chain-of-thought logs: ${error.message}`);
       throw error;
     }
@@ -645,7 +645,7 @@ export class RecallService extends Service {
     this.syncInterval = setInterval(async () => {
       try {
         await this.syncLogsToRecall(this.alias, batchSizeKB);
-      } catch (error) {
+      } catch (error: any) {
         elizaLogger.error(`Periodic log sync failed: ${error.message}`);
       }
     }, intervalMs);

@@ -44,8 +44,8 @@ export const getAccountInfoAction: Action = {
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State,
-    _options: { [key: string]: unknown },
+    state?: State,
+    _options?: { [key: string]: unknown },
     callback?: HandlerCallback,
   ): Promise<boolean> => {
     const recallService = runtime.services.get('recall' as ServiceType) as RecallService;
@@ -77,7 +77,7 @@ export const getAccountInfoAction: Action = {
         elizaLogger.error('GET_ACCOUNT_INFO failed: No account info received.');
         text = '⚠️ Unable to retrieve your account information. Please try again later.';
       }
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`GET_ACCOUNT_INFO error: ${error.message}`);
       text =
         '⚠️ An error occurred while fetching your account information. Please try again later.';

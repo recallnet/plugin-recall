@@ -14,14 +14,6 @@ export const config = [
   ...tseslint.configs.recommended,
   {
     plugins: {
-      turbo: turboPlugin,
-    },
-    rules: {
-      "turbo/no-undeclared-env-vars": "warn",
-    },
-  },
-  {
-    plugins: {
       onlyWarn,
     },
   },

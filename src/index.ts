@@ -8,7 +8,6 @@ import { createBucketAction } from './actions/create-bucket.js';
 import { addObjectAction } from './actions/add-object.js';
 import { getObjectAction } from './actions/get-object.js';
 import { cotProvider } from './providers/cot.js';
-// import { recallCotProvider } from './providers/index.js';
 
 export const recallStoragePlugin: Plugin = {
   name: 'Recall Storage Plugin',

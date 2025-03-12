@@ -4,7 +4,6 @@ import {
   Provider,
   State,
   elizaLogger,
-  messageCompletionFooter,
   ModelClass,
   composeContext,
   generateText,
@@ -205,14 +204,14 @@ export const cotProvider: Provider = {
         } else {
           elizaLogger.error(`${logPrefix} Unsupported database adapter type`);
         }
-      } catch (dbError) {
+      } catch (dbError: any) {
         elizaLogger.error(`${logPrefix} Database error while saving CoT log: ${dbError.message}`);
         elizaLogger.error(`${logPrefix} Error details:`, dbError);
       }
 
       elizaLogger.info(`${logPrefix} Chain-of-thought processing complete`);
       return chainOfThoughtText || '';
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`${logPrefix} Error in chain-of-thought provider:`);
       elizaLogger.error(`${logPrefix} ${error instanceof Error ? error.stack : 'Unknown error'}`);
       return '';

@@ -43,8 +43,8 @@ export const createBucketAction: Action = {
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State,
-    _options: { [key: string]: unknown },
+    state?: State,
+    _options?: { [key: string]: unknown },
     callback?: HandlerCallback,
   ): Promise<boolean> => {
     const recallService = runtime.services.get('recall' as ServiceType) as RecallService;
@@ -82,7 +82,7 @@ export const createBucketAction: Action = {
           elizaLogger.error('CREATE_BUCKET failed: No response from RecallService.');
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       text = '⚠️ An error occurred while creating your bucket. Please try again later.';
       elizaLogger.error(`CREATE_BUCKET error: ${error.message}`);
     }

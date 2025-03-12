@@ -56,8 +56,8 @@ export const getCreditBalanceAction: Action = {
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State,
-    _options: { [key: string]: unknown },
+    state?: State,
+    _options?: { [key: string]: unknown },
     callback?: HandlerCallback,
   ): Promise<boolean> => {
     const recallService = runtime.services.get('recall' as ServiceType) as RecallService;
@@ -82,7 +82,7 @@ export const getCreditBalanceAction: Action = {
         elizaLogger.error('GET_CREDIT_BALANCE failed: No balance info received.');
         text = '⚠️ Unable to retrieve your credit balance. Please try again later.';
       }
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`GET_CREDIT_BALANCE error: ${error.message}`);
       text = '⚠️ An error occurred while fetching your credit balance. Please try again later.';
     }

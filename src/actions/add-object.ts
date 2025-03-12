@@ -46,8 +46,8 @@ export const addObjectAction: Action = {
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State,
-    _options: { [key: string]: unknown },
+    state?: State,
+    _options?: { [key: string]: unknown },
     callback?: HandlerCallback,
   ): Promise<boolean> => {
     const recallService = runtime.services.get('recall' as ServiceType) as RecallService;
@@ -70,8 +70,14 @@ export const addObjectAction: Action = {
           '❌ Invalid request. Please specify both the object file and the bucket alias in double quotes.';
         elizaLogger.error('ADD_OBJECT failed: Missing object or bucket alias.');
       } else {
-        const objectPath = matches[1].trim();
-        const bucketAlias = matches[2].trim();
+        const objectPath = matches[1]?.trim();
+        const bucketAlias = matches[2]?.trim();
+        if (!objectPath || !bucketAlias) {
+          text =
+            '❌ Invalid request. Please specify both the object file and the bucket alias in double quotes.';
+          elizaLogger.error('ADD_OBJECT failed: Missing object or bucket alias.');
+          return false;
+        }
 
         elizaLogger.info(`Looking up bucket for alias: ${bucketAlias}`);
 
@@ -115,7 +121,7 @@ export const addObjectAction: Action = {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       text = '⚠️ An error occurred while adding the object. Please try again later.';
       elizaLogger.error(`ADD_OBJECT error: ${error.message}`);
       if (error.cause) {

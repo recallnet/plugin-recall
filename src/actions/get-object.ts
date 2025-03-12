@@ -43,8 +43,8 @@ export const getObjectAction: Action = {
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State,
-    _options: { [key: string]: unknown },
+    state?: State,
+    _options?: { [key: string]: unknown },
     callback?: HandlerCallback,
   ): Promise<boolean> => {
     const recallService = runtime.services.get('recall' as ServiceType) as RecallService;
@@ -67,8 +67,14 @@ export const getObjectAction: Action = {
           '❌ Invalid request. Please specify both the object key and the bucket alias in double quotes.';
         elizaLogger.error('GET_OBJECT failed: Missing object key or bucket alias.');
       } else {
-        const objectKey = matches[1].trim();
-        const bucketAlias = matches[2].trim();
+        const objectKey = matches[1]?.trim();
+        const bucketAlias = matches[2]?.trim();
+        if (!objectKey || !bucketAlias) {
+          text =
+            '❌ Invalid request. Please specify both the object key and the bucket alias in double quotes.';
+          elizaLogger.error('GET_OBJECT failed: Missing object key or bucket alias.');
+          return false;
+        }
 
         elizaLogger.info(`Looking up bucket for alias: ${bucketAlias}`);
 
@@ -106,7 +112,7 @@ export const getObjectAction: Action = {
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       text = '⚠️ An error occurred while retrieving the object. Please try again later.';
       elizaLogger.error(`GET_OBJECT error: ${error.message}`);
     }

@@ -37,8 +37,8 @@ export const listBucketsAction: Action = {
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State,
-    _options: { [key: string]: unknown },
+    state?: State,
+    _options?: { [key: string]: unknown },
     callback?: HandlerCallback,
   ): Promise<boolean> => {
     const recallService = runtime.services.get('recall' as ServiceType) as RecallService;
@@ -66,7 +66,7 @@ export const listBucketsAction: Action = {
         text = '📂 You currently have no Recall buckets.';
         elizaLogger.info('LIST_BUCKETS success: No buckets found.');
       }
-    } catch (error) {
+    } catch (error: any) {
       text = '⚠️ An error occurred while retrieving your buckets. Please try again later.';
       elizaLogger.error(`LIST_BUCKETS error: ${error.message}`);
     }
