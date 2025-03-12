@@ -9,7 +9,7 @@ import {
   composeContext,
   generateText,
 } from '@elizaos/core';
-import { logMemoryPostgres, logMemorySqlite } from '../utils.ts';
+import { logMemoryPostgres, logMemorySqlite } from '../utils.js';
 
 export const systemPrompt = `You are an AI assistant helping with a conversation.
 Before answering, please explicitly write out your step-by-step reasoning process starting with "REASONING:" and ending with "ANSWER:".

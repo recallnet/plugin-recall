@@ -1,10 +1,23 @@
 {
-    "extends": "../core/tsconfig.json",
-    "compilerOptions": {
-        "outDir": "dist",
-        "rootDir": "./src",
-        "typeRoots": ["./node_modules/@types", "./src/types"],
-        "declaration": true
-    },
-    "include": ["src"]
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Default",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "incremental": false,
+    "isolatedModules": true,
+    "lib": ["es2022", "DOM", "DOM.Iterable"],
+    "module": "NodeNext",
+    "moduleDetection": "force",
+    "moduleResolution": "NodeNext",
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2022",
+    "outDir": "dist"
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "test"]
 }

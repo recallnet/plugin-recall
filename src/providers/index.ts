@@ -1,5 +1,5 @@
 import { IAgentRuntime, Memory, Provider, State, ServiceType, elizaLogger } from '@elizaos/core';
-import { RecallService } from '../services/recall.service.ts';
+import { RecallService } from '../services/recall.service.js';
 
 export const recallCotProvider: Provider = {
   get: async (

@@ -8,7 +8,7 @@ import {
   elizaLogger,
   ServiceType,
 } from '@elizaos/core';
-import { RecallService } from '../services/recall.service';
+import { RecallService } from '../services/recall.service.js';
 
 const createBucketKeywords = [
   'create a bucket',

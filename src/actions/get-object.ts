@@ -8,7 +8,7 @@ import {
   elizaLogger,
   ServiceType,
 } from '@elizaos/core';
-import { RecallService } from '../services/recall.service';
+import { RecallService } from '../services/recall.service.js';
 import * as fs from 'fs';
 import * as path from 'path';
 

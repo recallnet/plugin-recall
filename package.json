@@ -1,77 +1,84 @@
 {
-    "name": "@elizaos-plugins/plugin-recall",
-    "version": "0.25.9",
-    "type": "module",
-    "main": "dist/index.js",
-    "module": "dist/index.js",
-    "types": "dist/index.d.ts",
-    "exports": {
-        "./package.json": "./package.json",
-        ".": {
-            "import": {
-                "@elizaos/source": "./src/index.ts",
-                "types": "./dist/index.d.ts",
-                "default": "./dist/index.js"
-            }
-        }
-    },
-    "files": [
-        "dist"
-    ],
-    "dependencies": {
-        "@recallnet/chains": "^0.0.5",
-        "@recallnet/sdk": "^0.0.6",
-        "@dsnp/parquetjs": "^1.8.5",
-        "duckdb": "^1.2.0",
-        "@elizaos/core": "workspace:*",
-        "tsup": "8.3.5"
-    },
-    "scripts": {
-        "build": "tsup --format esm --dts",
-        "dev": "tsup --format esm --dts --watch",
-        "test": "vitest run",
-        "lint": "biome check src/",
-        "lint:fix": "biome check --apply src/",
-        "format": "biome format src/",
-        "format:fix": "biome format --write src/"
-    },
-    "peerDependencies": {
-        "whatwg-url": "7.1.0"
-    },
-    "devDependencies": {
-        "@types/node": "^22.10.1",
-        "@biomejs/biome": "1.5.3"
-    },
-    "agentConfig": {
-        "pluginType": "elizaos:client:1.0.0",
-        "pluginParameters": {
-            "RECALL_PRIVATE_KEY": {
-                "type": "string",
-                "minLength": 1,
-                "description": "Recall private key for authentication"
-            },
-            "RECALL_BUCKET_ALIAS": {
-                "type": "string",
-                "minLength": 1,
-                "description": "Recall bucket alias is required"
-            },
-            "RECALL_COT_LOG_PREFIX": {
-                "type": "string",
-                "minLength": 1,
-                "description": "Recall COT log prefix is required"
-            },
-            "RECALL_NETWORK": {
-                "type": "string",
-                "description": "Recall network is optional"
-            },
-            "RECALL_SYNC_INTERVAL": {
-                "type": "number",
-                "description": "Recall sync interval is optional"
-            },
-            "RECALL_BATCH_SIZE": {
-                "type": "number",
-                "description": "Recall batch size is optional"
-            }
-        }
+  "name": "@elizaos-plugins/plugin-recall",
+  "version": "0.0.1",
+  "license": "MIT AND Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "Recall Network plugin for ElizaOS.",
+  "repository": "https://github.com/recallnet/plugin-recall.git",
+  "homepage": "https://github.com/recallnet/plugin-recall#readme",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsup"
+  },
+  "dependencies": {
+    "@dsnp/parquetjs": "^1.8.5",
+    "@elizaos/core": "^0.25.9",
+    "@recallnet/chains": "^0.0.5",
+    "@recallnet/sdk": "^0.0.6",
+    "duckdb": "^1.2.0",
+    "tsup": "8.3.5",
+    "uuid": "^11.1.0",
+    "viem": "^2.23.10"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.22.0",
+    "@trivago/prettier-plugin-sort-imports": "^5.2.1",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-only-warn": "^1.1.0",
+    "prettier": "^3.5.3",
+    "tsc": "^2.0.4",
+    "tsup": "8.3.5",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.1"
+  },
+  "agentConfig": {
+    "pluginType": "elizaos:client:1.0.0",
+    "pluginParameters": {
+      "RECALL_PRIVATE_KEY": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Recall private key for authentication"
+      },
+      "RECALL_BUCKET_ALIAS": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Recall bucket alias is required"
+      },
+      "RECALL_COT_LOG_PREFIX": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Recall COT log prefix is required"
+      },
+      "RECALL_NETWORK": {
+        "type": "string",
+        "description": "Recall network is optional"
+      },
+      "RECALL_SYNC_INTERVAL": {
+        "type": "number",
+        "description": "Recall sync interval is optional"
+      },
+      "RECALL_BATCH_SIZE": {
+        "type": "number",
+        "description": "Recall batch size is optional"
+      }
+    }
+  }
 }
