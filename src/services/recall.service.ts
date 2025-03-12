@@ -1,22 +1,28 @@
 import {
-  elizaLogger,
-  Service,
-  ServiceType,
   DatabaseAdapter,
   IAgentRuntime,
-} from '@elizaos/core';
-import { ChainName, getChain, testnet } from '@recallnet/chains';
-import { AccountInfo } from '@recallnet/sdk/account';
-import { ListResult } from '@recallnet/sdk/bucket';
-import { RecallClient, walletClientFromPrivateKey } from '@recallnet/sdk/client';
-import { CreditAccount } from '@recallnet/sdk/credit';
-import { Address, Hex, parseEther, TransactionReceipt } from 'viem';
+  Service,
+  ServiceType,
+  type UUID,
+  elizaLogger,
+} from "@elizaos/core";
+import { Address, Hex, TransactionReceipt, parseEther } from "viem";
+
+import { ChainName, getChain, testnet } from "@recallnet/chains";
+import { AccountInfo } from "@recallnet/sdk/account";
+import { ListResult } from "@recallnet/sdk/bucket";
+import {
+  RecallClient,
+  walletClientFromPrivateKey,
+} from "@recallnet/sdk/client";
+import { CreditAccount } from "@recallnet/sdk/credit";
+
 import {
   getUnsyncedLogsPostgres,
   getUnsyncedLogsSqlite,
   markLogsAsSyncedPostgres,
   markLogsAsSyncedSqlite,
-} from '../utils.ts';
+} from "../utils.js";
 
 type Result<T = unknown> = {
   result: T;
@@ -33,14 +39,14 @@ const intervalPeriod = process.env.RECALL_SYNC_INTERVAL as string;
 const batchSize = process.env.RECALL_BATCH_SIZE as string;
 
 export class RecallService extends Service {
-  static serviceType: ServiceType = 'recall' as ServiceType;
-  private client: RecallClient;
-  private runtime: IAgentRuntime;
+  static serviceType: ServiceType = "recall" as ServiceType;
+  private client!: RecallClient;
+  private runtime!: IAgentRuntime;
   private syncInterval: NodeJS.Timeout | undefined;
-  private alias: string;
-  private prefix: string;
-  private intervalMs: number;
-  private batchSizeKB: number;
+  private alias!: string;
+  private prefix!: string;
+  private intervalMs!: number;
+  private batchSizeKB!: number;
 
   getInstance(): RecallService {
     return RecallService.getInstance();
@@ -49,13 +55,13 @@ export class RecallService extends Service {
   async initialize(_runtime: IAgentRuntime): Promise<void> {
     try {
       if (!privateKey) {
-        throw new Error('RECALL_PRIVATE_KEY is required');
+        throw new Error("RECALL_PRIVATE_KEY is required");
       }
       if (!envAlias) {
-        throw new Error('RECALL_BUCKET_ALIAS is required');
+        throw new Error("RECALL_BUCKET_ALIAS is required");
       }
       if (!envPrefix) {
-        throw new Error('RECALL_COT_LOG_PREFIX is required');
+        throw new Error("RECALL_COT_LOG_PREFIX is required");
       }
       const chain = network ? getChain(network as ChainName) : testnet;
       const wallet = walletClientFromPrivateKey(privateKey, chain);
@@ -64,15 +70,19 @@ export class RecallService extends Service {
       this.prefix = envPrefix;
       this.runtime = _runtime;
       // Use user-defined sync interval and batch size, if provided
-      this.intervalMs = intervalPeriod ? parseInt(intervalPeriod, 10) : 2 * 60 * 1000;
+      this.intervalMs = intervalPeriod
+        ? parseInt(intervalPeriod, 10)
+        : 2 * 60 * 1000;
       this.batchSizeKB = batchSize ? parseInt(batchSize, 10) : 4;
 
       // Ensure isSynced column exists in logs table
       await this.ensureRequiredColumns();
 
       this.startPeriodicSync(this.intervalMs, this.batchSizeKB);
-      elizaLogger.success('RecallService initialized successfully, starting periodic sync.');
-    } catch (error) {
+      elizaLogger.info(
+        "RecallService initialized successfully, starting periodic sync.",
+      );
+    } catch (error: any) {
       elizaLogger.error(`Error initializing RecallService: ${error.message}`);
     }
   }
@@ -86,11 +96,18 @@ export class RecallService extends Service {
       const db: any = this.runtime.databaseAdapter;
 
       // First, check for isSynced column
-      await this.ensureColumn(db, 'isSynced', 'BOOLEAN', 'INTEGER', 'FALSE', '0');
+      await this.ensureColumn(
+        db,
+        "isSynced",
+        "BOOLEAN",
+        "INTEGER",
+        "FALSE",
+        "0",
+      );
 
       // Then, check for agentId column
-      await this.ensureColumn(db, 'agentId', 'TEXT', 'TEXT', 'NULL', 'NULL');
-    } catch (error) {
+      await this.ensureColumn(db, "agentId", "TEXT", "TEXT", "NULL", "NULL");
+    } catch (error: any) {
       elizaLogger.error(`Error ensuring required columns: ${error.message}`);
       throw error;
     }
@@ -108,7 +125,7 @@ export class RecallService extends Service {
       // Check if the column exists
       let columnExists = false;
 
-      if ('pool' in db) {
+      if ("pool" in db) {
         // PostgreSQL
         const result = await db.pool.query(
           `
@@ -119,25 +136,25 @@ export class RecallService extends Service {
           [columnName],
         );
         columnExists = result.rowCount > 0;
-      } else if ('db' in db) {
+      } else if ("db" in db) {
         // SQLite
         const result = db.db.prepare(`PRAGMA table_info(logs)`).all();
-        columnExists = result.some((col) => col.name === columnName);
+        columnExists = result.some((col: any) => col.name === columnName);
       } else {
-        throw new Error('Unsupported database adapter');
+        throw new Error("Unsupported database adapter");
       }
 
       // Add the column if it doesn't exist
       if (!columnExists) {
         elizaLogger.info(`Adding ${columnName} column to logs table`);
 
-        if ('pool' in db) {
+        if ("pool" in db) {
           // PostgreSQL
           await db.pool.query(`
             ALTER TABLE logs 
             ADD COLUMN "${columnName}" ${pgType} DEFAULT ${pgDefault}
           `);
-        } else if ('db' in db) {
+        } else if ("db" in db) {
           // SQLite
           await db.db
             .prepare(
@@ -149,12 +166,16 @@ export class RecallService extends Service {
             .run();
         }
 
-        elizaLogger.info(`Successfully added ${columnName} column to logs table`);
+        elizaLogger.info(
+          `Successfully added ${columnName} column to logs table`,
+        );
       } else {
         elizaLogger.info(`${columnName} column already exists in logs table`);
       }
-    } catch (error) {
-      elizaLogger.error(`Error ensuring ${columnName} column: ${error.message}`);
+    } catch (error: any) {
+      elizaLogger.error(
+        `Error ensuring ${columnName} column: ${error.message}`,
+      );
       throw error;
     }
   }
@@ -165,12 +186,20 @@ export class RecallService extends Service {
    * @param operationName The name of the operation for logging.
    * @returns The result of the promise.
    */
-  async withTimeout<T>(promise: Promise<T>, timeoutMs: number, operationName: string): Promise<T> {
+  async withTimeout<T>(
+    promise: Promise<T>,
+    timeoutMs: number,
+    operationName: string,
+  ): Promise<T> {
     let timeoutId: NodeJS.Timeout;
 
     const timeoutPromise = new Promise<T>((_, reject) => {
       timeoutId = setTimeout(() => {
-        reject(new Error(`${operationName} operation timed out after ${timeoutMs}ms`));
+        reject(
+          new Error(
+            `${operationName} operation timed out after ${timeoutMs}ms`,
+          ),
+        );
       }, timeoutMs);
     });
 
@@ -188,11 +217,11 @@ export class RecallService extends Service {
    * Gets the account information for the current user.
    * @returns The account information.
    */
-  public async getAccountInfo(): Promise<AccountInfo> | undefined {
+  public async getAccountInfo(): Promise<AccountInfo | undefined> {
     try {
       const info = await this.client.accountManager().info();
       return info.result;
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error getting account info: ${error.message}`);
       throw error;
     }
@@ -202,11 +231,11 @@ export class RecallService extends Service {
    * Lists all buckets in Recall.
    * @returns The list of buckets.
    */
-  public async listBuckets(): Promise<ListResult> | undefined {
+  public async listBuckets(): Promise<ListResult | undefined> {
     try {
       const info = await this.client.bucketManager().list();
       return info.result;
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error listing buckets: ${error.message}`);
       throw error;
     }
@@ -216,11 +245,11 @@ export class RecallService extends Service {
    * Gets the credit information for the account.
    * @returns The credit information.
    */
-  public async getCreditInfo(): Promise<CreditAccount> | undefined {
+  public async getCreditInfo(): Promise<CreditAccount | undefined> {
     try {
       const info = await this.client.creditManager().getAccount();
       return info.result;
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error getting credit info: ${error.message}`);
       throw error;
     }
@@ -235,7 +264,7 @@ export class RecallService extends Service {
     try {
       const info = await this.client.creditManager().buy(parseEther(amount));
       return info; // Return the full Result object
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error buying credit: ${error.message}`);
       throw error;
     }
@@ -253,12 +282,18 @@ export class RecallService extends Service {
       // Try to find the bucket by alias
       const buckets = await this.client.bucketManager().list();
       if (buckets?.result) {
-        const bucket = buckets.result.find((b) => b.metadata?.alias === bucketAlias);
+        const bucket = buckets.result.find(
+          (b) => b.metadata?.alias === bucketAlias,
+        );
         if (bucket) {
-          elizaLogger.info(`Found existing bucket "${bucketAlias}" at ${bucket.addr}`);
+          elizaLogger.info(
+            `Found existing bucket "${bucketAlias}" at ${bucket.addr}`,
+          );
           return bucket.addr; // Return existing bucket address
         } else {
-          elizaLogger.info(`Bucket with alias "${bucketAlias}" not found, creating a new one.`);
+          elizaLogger.info(
+            `Bucket with alias "${bucketAlias}" not found, creating a new one.`,
+          );
         }
       }
 
@@ -269,13 +304,17 @@ export class RecallService extends Service {
 
       const newBucket = query.result;
       if (!newBucket) {
-        elizaLogger.error(`Failed to create new bucket with alias: ${bucketAlias}`);
+        elizaLogger.error(
+          `Failed to create new bucket with alias: ${bucketAlias}`,
+        );
         throw new Error(`Failed to create bucket: ${bucketAlias}`);
       }
 
-      elizaLogger.info(`Successfully created new bucket "${bucketAlias}" at ${newBucket.bucket}`);
+      elizaLogger.info(
+        `Successfully created new bucket "${bucketAlias}" at ${newBucket.bucket}`,
+      );
       return newBucket.bucket;
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error in getOrCreateBucket: ${error.message}`);
       throw error;
     }
@@ -308,7 +347,7 @@ export class RecallService extends Service {
         overwrite: options?.overwrite ?? false,
       });
       return info; // Return the full Result object
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error adding object: ${error.message}`);
       throw error;
     }
@@ -320,11 +359,14 @@ export class RecallService extends Service {
    * @param key The key under which the object is stored.
    * @returns The data stored under the specified key.
    */
-  public async getObject(bucket: Address, key: string): Promise<Uint8Array | undefined> {
+  public async getObject(
+    bucket: Address,
+    key: string,
+  ): Promise<Uint8Array | undefined> {
     try {
       const info = await this.client.bucketManager().get(bucket, key);
       return info.result;
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.warn(`Error getting object: ${error.message}`);
       // Return undefined instead of throwing to allow graceful handling of missing objects
       return undefined;
@@ -339,16 +381,16 @@ export class RecallService extends Service {
     try {
       const db: any = this.runtime.databaseAdapter;
 
-      if ('pool' in db) {
+      if ("pool" in db) {
         // PostgreSQL
         return await getUnsyncedLogsPostgres(db.pool);
-      } else if ('db' in db) {
+      } else if ("db" in db) {
         // SQLite
         return await getUnsyncedLogsSqlite(db.db);
       } else {
-        throw new Error('Unsupported database adapter');
+        throw new Error("Unsupported database adapter");
       }
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error getting unsynced logs: ${error.message}`);
       return [];
     }
@@ -359,7 +401,7 @@ export class RecallService extends Service {
    * @param logIds The IDs of the logs to mark as synced.
    * @returns Whether the operation was successful.
    */
-  async markLogsAsSynced(logIds: string[]): Promise<boolean> {
+  async markLogsAsSynced(logIds: UUID[]): Promise<boolean> {
     if (logIds.length === 0) {
       return true;
     }
@@ -367,32 +409,36 @@ export class RecallService extends Service {
     try {
       const db: any = this.runtime.databaseAdapter;
 
-      if ('pool' in db) {
+      if ("pool" in db) {
         // PostgreSQL
         await markLogsAsSyncedPostgres(db.pool, logIds);
-      } else if ('db' in db) {
+      } else if ("db" in db) {
         // SQLite
         await markLogsAsSyncedSqlite(db.db, logIds);
       } else {
-        throw new Error('Unsupported database adapter');
+        throw new Error("Unsupported database adapter");
       }
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       elizaLogger.error(`Error marking logs as synced: ${error.message}`);
       return false;
     }
   }
 
-  async runRawQuery<R>(dbAdapter: DatabaseAdapter, query: string, params?: any[]): Promise<R[]> {
-    if ('pool' in dbAdapter) {
+  async runRawQuery<R>(
+    dbAdapter: DatabaseAdapter,
+    query: string,
+    params?: any[],
+  ): Promise<R[]> {
+    if ("pool" in dbAdapter) {
       // PostgreSQL (uses pool.query)
       return (await (dbAdapter as any).pool.query(query, params)).rows as R[];
-    } else if ('db' in dbAdapter) {
+    } else if ("db" in dbAdapter) {
       // SQLite (uses prepare + all)
       return (dbAdapter as any).db.prepare(query).all(...(params || [])) as R[];
     } else {
-      throw new Error('Unsupported database adapter');
+      throw new Error("Unsupported database adapter");
     }
   }
 
@@ -410,7 +456,7 @@ export class RecallService extends Service {
   ): Promise<string | undefined> {
     try {
       const nextLogKey = `${this.prefix}${timestamp}.jsonl`;
-      const batchData = batch.join('\n');
+      const batchData = batch.join("\n");
 
       // Add 30 second timeout to the add operation
       const addObject = await this.withTimeout(
@@ -418,22 +464,26 @@ export class RecallService extends Service {
           .bucketManager()
           .add(bucketAddress, nextLogKey, new TextEncoder().encode(batchData)),
         30000, // 30 second timeout
-        'Recall batch storage',
+        "Recall batch storage",
       );
 
       if (!addObject?.meta?.tx) {
         // Check for transaction receipt instead of result
-        elizaLogger.error('Recall API returned invalid response for batch storage');
+        elizaLogger.error(
+          "Recall API returned invalid response for batch storage",
+        );
         return undefined;
       }
 
       elizaLogger.info(`Successfully stored batch at key: ${nextLogKey}`);
       return nextLogKey;
-    } catch (error) {
-      if (error.message.includes('timed out')) {
+    } catch (error: any) {
+      if (error.message.includes("timed out")) {
         elizaLogger.error(`Recall API timed out while storing batch`);
       } else {
-        elizaLogger.error(`Error storing JSONL logs in Recall: ${error.message}`);
+        elizaLogger.error(
+          `Error storing JSONL logs in Recall: ${error.message}`,
+        );
       }
       return undefined;
     }
@@ -450,14 +500,14 @@ export class RecallService extends Service {
       const bucketAddress = await this.withTimeout(
         this.getOrCreateBucket(bucketAlias),
         15000, // 15 second timeout
-        'Get/Create bucket',
+        "Get/Create bucket",
       );
 
       // Get logs that haven't been synced yet
       const unsyncedLogs = await this.getUnsyncedLogs();
 
       if (unsyncedLogs.length === 0) {
-        elizaLogger.info('No unsynced logs to process.');
+        elizaLogger.info("No unsynced logs to process.");
         return;
       }
 
@@ -465,12 +515,13 @@ export class RecallService extends Service {
 
       let batch: string[] = [];
       let batchSize = 0;
-      let processedLogIds: string[] = [];
+      let processedLogIds: UUID[] = [];
       let batchTimestamp = Date.now().toString();
 
       // Sort logs by createdAt to ensure we process in chronological order
       unsyncedLogs.sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
 
       for (const log of unsyncedLogs) {
@@ -494,16 +545,24 @@ export class RecallService extends Service {
               `Batch size ${batchSize + logSize} bytes exceeds ${batchSizeKB} KB limit. Attempting sync...`,
             );
 
-            const logFileKey = await this.storeBatchToRecall(bucketAddress, batch, batchTimestamp);
+            const logFileKey = await this.storeBatchToRecall(
+              bucketAddress,
+              batch,
+              batchTimestamp,
+            );
 
             if (logFileKey) {
-              elizaLogger.info(`Successfully synced batch of ${batch.length} logs`);
+              elizaLogger.info(
+                `Successfully synced batch of ${batch.length} logs`,
+              );
 
               // Mark logs as synced
               if (processedLogIds.length > 0) {
                 const success = await this.markLogsAsSynced(processedLogIds);
                 if (!success) {
-                  elizaLogger.warn(`Failed to mark logs as synced - will retry on next sync`);
+                  elizaLogger.warn(
+                    `Failed to mark logs as synced - will retry on next sync`,
+                  );
                 }
               }
             } else {
@@ -524,26 +583,38 @@ export class RecallService extends Service {
           batch.push(jsonlEntry);
           batchSize += logSize;
           processedLogIds.push(log.id);
-        } catch (error) {
-          elizaLogger.error(`Error processing log entry ${log.id}: ${error.message}`);
+        } catch (error: any) {
+          elizaLogger.error(
+            `Error processing log entry ${log.id}: ${error.message}`,
+          );
         }
       }
 
       // Store any remaining logs in the batch
       if (batch.length > 0) {
-        elizaLogger.info(`Storing final batch of ${batch.length} logs (${batchSize} bytes)`);
-        const logFileKey = await this.storeBatchToRecall(bucketAddress, batch, batchTimestamp);
+        elizaLogger.info(
+          `Storing final batch of ${batch.length} logs (${batchSize} bytes)`,
+        );
+        const logFileKey = await this.storeBatchToRecall(
+          bucketAddress,
+          batch,
+          batchTimestamp,
+        );
 
         if (logFileKey) {
           // Mark logs as synced
           if (processedLogIds.length > 0) {
             const success = await this.markLogsAsSynced(processedLogIds);
             if (!success) {
-              elizaLogger.warn(`Failed to mark logs as synced - will retry on next sync`);
+              elizaLogger.warn(
+                `Failed to mark logs as synced - will retry on next sync`,
+              );
             }
           }
         } else {
-          elizaLogger.warn(`Failed to sync final batch of ${batch.length} logs`);
+          elizaLogger.warn(
+            `Failed to sync final batch of ${batch.length} logs`,
+          );
         }
       }
 
@@ -552,8 +623,8 @@ export class RecallService extends Service {
           ? `${this.intervalMs / 1000} seconds`
           : `${this.intervalMs / 1000 / 60} minutes`;
       elizaLogger.info(`Sync cycle complete. Next sync in ${logSyncInterval}.`);
-    } catch (error) {
-      if (error.message.includes('timed out')) {
+    } catch (error: any) {
+      if (error.message.includes("timed out")) {
         elizaLogger.error(`Recall sync operation timed out: ${error.message}`);
       } else {
         elizaLogger.error(`Error in syncLogsToRecall: ${error.message}`);
@@ -569,7 +640,9 @@ export class RecallService extends Service {
   async retrieveOrderedChainOfThoughtLogs(bucketAlias: string): Promise<any[]> {
     try {
       const bucketAddress = await this.getOrCreateBucket(bucketAlias);
-      elizaLogger.info(`Retrieving chain-of-thought logs from bucket: ${bucketAddress}`);
+      elizaLogger.info(
+        `Retrieving chain-of-thought logs from bucket: ${bucketAddress}`,
+      );
 
       // Query all objects with the designated prefix
       const queryResult = await this.client
@@ -577,14 +650,16 @@ export class RecallService extends Service {
         .query(bucketAddress, { prefix: this.prefix }); // Remove the extra '/'
 
       if (!queryResult.result?.objects.length) {
-        elizaLogger.info(`No chain-of-thought logs found in bucket: ${bucketAlias}`);
+        elizaLogger.info(
+          `No chain-of-thought logs found in bucket: ${bucketAlias}`,
+        );
         return [];
       }
 
       // Extract log filenames and sort by timestamp
       const logFiles = queryResult.result.objects
         .map((obj) => obj.key)
-        .filter((key) => key.startsWith(this.prefix) && key.endsWith('.jsonl'))
+        .filter((key) => key.startsWith(this.prefix) && key.endsWith(".jsonl"))
         .sort((a, b) => {
           // Extract timestamps by removing prefix and .jsonl extension
           const timeA = parseInt(a.slice(this.prefix.length, -6), 10);
@@ -592,30 +667,41 @@ export class RecallService extends Service {
           return timeA - timeB;
         });
 
-      elizaLogger.info(`Retrieving ${logFiles.length} ordered chain-of-thought logs...`);
+      elizaLogger.info(
+        `Retrieving ${logFiles.length} ordered chain-of-thought logs...`,
+      );
 
       let allLogs: any[] = [];
 
       // Download and parse each log file
       for (const logFile of logFiles) {
         try {
-          const logData = await this.client.bucketManager().get(bucketAddress, logFile);
+          const logData = await this.client
+            .bucketManager()
+            .get(bucketAddress, logFile);
           if (!logData.result) continue;
 
           // Decode and split JSONL content
-          const decodedLogs = new TextDecoder().decode(logData.result).trim().split('\n');
+          const decodedLogs = new TextDecoder()
+            .decode(logData.result)
+            .trim()
+            .split("\n");
           const parsedLogs = decodedLogs.map((line) => JSON.parse(line));
 
           allLogs.push(...parsedLogs);
-        } catch (error) {
-          elizaLogger.error(`Error retrieving log file ${logFile}: ${error.message}`);
+        } catch (error: any) {
+          elizaLogger.error(
+            `Error retrieving log file ${logFile}: ${error.message}`,
+          );
         }
       }
 
       // Sort logs by createdAt if available, otherwise maintain file order
       allLogs.sort((a, b) => {
         if (a.createdAt && b.createdAt) {
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
         }
         return 0;
       });
@@ -624,8 +710,10 @@ export class RecallService extends Service {
         `Successfully retrieved and ordered ${allLogs.length} chain-of-thought logs.`,
       );
       return allLogs;
-    } catch (error) {
-      elizaLogger.error(`Error retrieving ordered chain-of-thought logs: ${error.message}`);
+    } catch (error: any) {
+      elizaLogger.error(
+        `Error retrieving ordered chain-of-thought logs: ${error.message}`,
+      );
       throw error;
     }
   }
@@ -637,15 +725,15 @@ export class RecallService extends Service {
    */
   public startPeriodicSync(intervalMs = 2 * 60 * 1000, batchSizeKB = 4): void {
     if (this.syncInterval) {
-      elizaLogger.warn('Log sync is already running.');
+      elizaLogger.warn("Log sync is already running.");
       return;
     }
 
-    elizaLogger.info('Starting periodic log sync...');
+    elizaLogger.info("Starting periodic log sync...");
     this.syncInterval = setInterval(async () => {
       try {
         await this.syncLogsToRecall(this.alias, batchSizeKB);
-      } catch (error) {
+      } catch (error: any) {
         elizaLogger.error(`Periodic log sync failed: ${error.message}`);
       }
     }, intervalMs);
@@ -663,7 +751,7 @@ export class RecallService extends Service {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
       this.syncInterval = undefined;
-      elizaLogger.info('Stopped periodic log syncing.');
+      elizaLogger.info("Stopped periodic log syncing.");
     }
   }
 }

@@ -1,33 +1,41 @@
 import {
   type Action,
+  type ActionExample,
+  type HandlerCallback,
   type IAgentRuntime,
   type Memory,
-  type State,
-  type HandlerCallback,
-  type ActionExample,
-  elizaLogger,
   ServiceType,
-} from '@elizaos/core';
-import { RecallService } from '../services/recall.service';
+  type State,
+  elizaLogger,
+} from "@elizaos/core";
 
-const keywords = ['buy', 'credit', 'credits', 'purchase', 'add credit', 'add credits'];
+import { RecallService } from "../services/recall.service.js";
+
+const keywords = [
+  "buy",
+  "credit",
+  "credits",
+  "purchase",
+  "add credit",
+  "add credits",
+];
 
 export const buyCreditAction: Action = {
-  name: 'BUY_CREDIT',
+  name: "BUY_CREDIT",
   similes: [
-    'BUY_CREDIT',
-    'buy credit',
-    'buy credits',
-    'purchase credit',
-    'purchase credits',
-    'add credit',
-    'add credits',
-    'ADD_CREDIT',
-    'RELOAD_CREDIT',
-    'PURCHASE_CREDIT',
-    'BUY RECALL CREDITS',
-    'GET MORE CREDITS',
-    'RECHARGE ACCOUNT',
+    "BUY_CREDIT",
+    "buy credit",
+    "buy credits",
+    "purchase credit",
+    "purchase credits",
+    "add credit",
+    "add credits",
+    "ADD_CREDIT",
+    "RELOAD_CREDIT",
+    "PURCHASE_CREDIT",
+    "BUY RECALL CREDITS",
+    "GET MORE CREDITS",
+    "RECHARGE ACCOUNT",
   ],
   validate: async (_runtime: IAgentRuntime, message: Memory) => {
     const text = message.content.text.toLowerCase();
@@ -37,14 +45,21 @@ export const buyCreditAction: Action = {
       return false;
     }
 
-    const amount = parseFloat(amountMatch[1]);
+    const value = amountMatch[1];
+    if (!value) {
+      elizaLogger.error("BUY_CREDIT failed: No amount provided.");
+      return false;
+    }
+    const amount = parseFloat(value);
     if (isNaN(amount) || amount <= 0) {
       return false;
     }
 
     // Now check for any matching keywords
     if (!keywords.some((keyword) => text.includes(keyword))) {
-      elizaLogger.error('BUY_CREDIT failed: No valid keyword found in message.');
+      elizaLogger.error(
+        "BUY_CREDIT failed: No valid keyword found in message.",
+      );
       return false;
     }
 
@@ -55,12 +70,14 @@ export const buyCreditAction: Action = {
   handler: async (
     runtime: IAgentRuntime,
     message: Memory,
-    state: State,
-    _options: { [key: string]: unknown },
+    state?: State,
+    _options?: { [key: string]: unknown },
     callback?: HandlerCallback,
   ): Promise<boolean> => {
-    const recallService = runtime.services.get('recall' as ServiceType) as RecallService;
-    let text = '';
+    const recallService = runtime.services.get(
+      "recall" as ServiceType,
+    ) as RecallService;
+    let text = "";
 
     try {
       let currentState = state;
@@ -73,13 +90,20 @@ export const buyCreditAction: Action = {
       const amountMatch = message.content.text.trim().match(/([\d.]+)/);
 
       if (!amountMatch) {
-        text = '❌ Invalid credit request. Please specify an amount.';
-        elizaLogger.error('BUY_CREDIT failed: No amount provided.');
+        text = "❌ Invalid credit request. Please specify an amount.";
+        elizaLogger.error("BUY_CREDIT failed: No amount provided.");
+        return false;
       } else {
-        const amount = parseFloat(amountMatch[1]);
+        const value = amountMatch[1];
+        if (!value) {
+          elizaLogger.error("BUY_CREDIT failed: No amount provided.");
+          return false;
+        }
+        const amount = parseFloat(value);
         if (isNaN(amount) || amount <= 0) {
-          text = '❌ Invalid credit amount. Please enter a number greater than 0.';
-          elizaLogger.error('BUY_CREDIT failed: Invalid amount.');
+          text =
+            "❌ Invalid credit amount. Please enter a number greater than 0.";
+          elizaLogger.error("BUY_CREDIT failed: Invalid amount.");
         } else {
           elizaLogger.info(`Attempting to purchase ${amount} credits...`);
 
@@ -93,13 +117,14 @@ export const buyCreditAction: Action = {
               `BUY_CREDIT success: ${amount} credits added. TX: ${result.meta.tx.transactionHash}`,
             );
           } else {
-            text = '❌ Credit purchase failed. Please try again later.';
-            elizaLogger.error('BUY_CREDIT failed: Transaction unsuccessful');
+            text = "❌ Credit purchase failed. Please try again later.";
+            elizaLogger.error("BUY_CREDIT failed: Transaction unsuccessful");
           }
         }
       }
-    } catch (error) {
-      text = '⚠️ An error occurred while purchasing credits. Please try again later.';
+    } catch (error: any) {
+      text =
+        "⚠️ An error occurred while purchasing credits. Please try again later.";
       elizaLogger.error(`BUY_CREDIT error: ${error.message}`);
     }
 
@@ -109,7 +134,7 @@ export const buyCreditAction: Action = {
       userId: message.agentId,
       content: {
         text,
-        action: 'BUY_CREDIT',
+        action: "BUY_CREDIT",
         source: message.content.source,
       },
     };
@@ -127,40 +152,40 @@ export const buyCreditAction: Action = {
   examples: [
     [
       {
-        user: '{{user1}}',
-        content: { text: 'Please buy 0.1 credits for my account' },
+        user: "{{user1}}",
+        content: { text: "Please buy 0.1 credits for my account" },
       },
       {
-        user: '{{agentName}}',
+        user: "{{agentName}}",
         content: {
-          text: '✅ Successfully purchased 0.1 Recall credits! Transaction hash: 0x...',
-          action: 'BUY_CREDIT',
+          text: "✅ Successfully purchased 0.1 Recall credits! Transaction hash: 0x...",
+          action: "BUY_CREDIT",
         },
       },
     ],
     [
       {
-        user: '{{user1}}',
-        content: { text: 'Please buy 1.5 credits for my account' },
+        user: "{{user1}}",
+        content: { text: "Please buy 1.5 credits for my account" },
       },
       {
-        user: '{{agentName}}',
+        user: "{{agentName}}",
         content: {
-          text: '✅ Successfully bought 1.5 Recall credits! Transaction hash: 0x...',
-          action: 'BUY_CREDIT',
+          text: "✅ Successfully bought 1.5 Recall credits! Transaction hash: 0x...",
+          action: "BUY_CREDIT",
         },
       },
     ],
     [
       {
-        user: '{{user1}}',
-        content: { text: 'Please add 3 credits to my account' },
+        user: "{{user1}}",
+        content: { text: "Please add 3 credits to my account" },
       },
       {
-        user: '{{agentName}}',
+        user: "{{agentName}}",
         content: {
-          text: '✅ Successfully added 3 Recall credits to your account! Transaction hash: 0x...',
-          action: 'BUY_CREDIT',
+          text: "✅ Successfully added 3 Recall credits to your account! Transaction hash: 0x...",
+          action: "BUY_CREDIT",
         },
       },
     ],
