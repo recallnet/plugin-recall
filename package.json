@@ -35,8 +35,8 @@
   "dependencies": {
     "@dsnp/parquetjs": "^1.8.5",
     "@elizaos/core": "^0.25.9",
-    "@recallnet/chains": "^0.0.5",
-    "@recallnet/sdk": "^0.0.6",
+    "@recallnet/chains": "^0.0.6",
+    "@recallnet/sdk": "^0.0.7",
     "duckdb": "^1.2.0",
     "uuid": "^11.1.0",
     "viem": "^2.23.10"
