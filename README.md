@@ -4,6 +4,8 @@
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE-APACHE)
 [![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg)](https://github.com/RichardLitt/standard-readme)
 
+![Recall Eliza Plugin](./images/banner.jpg)
+
 > Integrate **Recall storage** with Eliza AI agents, providing persistent memory capabilities.
 
 ## Table of Contents
